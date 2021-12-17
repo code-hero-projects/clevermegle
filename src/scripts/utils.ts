@@ -1,0 +1,1 @@
+export const openUrlInNewTab = (url: string) => window.open('https://www.cleverbot.com/', '_blank');
