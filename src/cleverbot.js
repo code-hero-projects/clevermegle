@@ -1,3 +1,4 @@
+// DOM
 const understoodFormSubmitButton = document.getElementById('noteb').childNodes[1];
 understoodFormSubmitButton.submit();
 
@@ -15,7 +16,7 @@ const getCleverbotResponse = onResponse => {
       const response = currentResponseInput.textContent;
       onResponse(response);
     }
-  });
+  }, 200);
 };
 
 const respondToCleverbot = message => {
@@ -23,7 +24,20 @@ const respondToCleverbot = message => {
   messageFormSubmitButton.click();
 };
 
+// Socket
 const socket = new WebSocket('ws://localhost:8080');
+
+const handleDataMessage = message => {
+  respondToCleverbot(message);
+  getCleverbotResponse(cleverbotResponse => {
+    const messageToSend = {
+      type: 'data',
+      to: 'omegle',
+      data: cleverbotResponse
+    };
+    socket.send(JSON.stringify(messageToSend));
+  });
+};
 
 socket.addEventListener('open', event => {
   const message = {
@@ -35,15 +49,5 @@ socket.addEventListener('open', event => {
 
 socket.addEventListener('message', event => {
   const message = event.data;
-  respondToCleverbot(message);
-
-  getCleverbotResponse(cleverbotResponse => {
-    const messageToSend = {
-      type: 'data',
-      to: 'omegle',
-      data: cleverbotResponse
-    };
-  
-    socket.send(JSON.stringify(messageToSend));
-  });
+  handleDataMessage(message);
 });

@@ -1,23 +1,6 @@
-const socket = new WebSocket('ws://localhost:8080');
+// DOM
+
 let currentMessagesLength = 0;
-
-socket.addEventListener('open', event => {
-  const message = {
-    type: 'connection',
-    from: 'omegle'
-  };
-  socket.send(JSON.stringify(message));
-});
-
-const sendSocketMessage = message => {
-  const messageToSend = {
-    type: 'data',
-    to: 'cleverbot',
-    data: message
-  };
-
-  socket.send(JSON.stringify(messageToSend));
-};
 
 const consentTermsAndConditions = () => {
   // TODO
@@ -37,7 +20,7 @@ const getNextMessage = onMessage => {
 
       onMessage(message);
     }
-  })
+  }, 200);
 };
 
 const replyToStranger = message => {
@@ -47,6 +30,30 @@ const replyToStranger = message => {
   sendButton.click();
 };
 
+// Socket
+
+const socket = new WebSocket('ws://localhost:8080');
+
+socket.addEventListener('open', event => {
+  const message = {
+    type: 'connection',
+    from: 'omegle'
+  };
+  socket.send(JSON.stringify(message));
+});
+
+const sendSocketMessage = message => {
+  const messageToSend = {
+    type: 'data',
+    to: 'cleverbot',
+    data: message
+  };
+
+  socket.send(JSON.stringify(messageToSend));
+};
+
+// App
+
 const startChatting = () => {
   console.log('started');
   consentTermsAndConditions();
@@ -54,13 +61,11 @@ const startChatting = () => {
   socket.addEventListener('message', event => {
     const message = event.data;
     replyToStranger(message);
-
     getNextMessage(sendSocketMessage);
   });
 
   getNextMessage(sendSocketMessage);
 };
 
-document.getElementById('chattypetextcell').onclick = startChatting;
-document.getElementById('chattypevideocell').onclick = startChatting;
-document.getElementById('videobtnstatus').onclick = startChatting;
+const startChatButtonsIds = ['chattypetextcell', 'chattypevideocell', 'videobtnstatus'];
+startChatButtonsIds.forEach(id => document.getElementById(id).onclick = startChatting);
