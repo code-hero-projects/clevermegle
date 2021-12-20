@@ -12,9 +12,9 @@ const newConnectionMessageHandler = (message, socket) => {
 };
 
 const dataMessageHandler = (message) => {
-  const { to, data } = message;
+  const { to, body } = message;
   console.log('delivering data message to: ' + to);
-  socketConnections[to].send(data);
+  socketConnections[to].send(JSON.stringify(body));
 };
 
 const messageHandlers = {

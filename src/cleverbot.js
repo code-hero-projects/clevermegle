@@ -1,4 +1,4 @@
-// DOM
+// DOM elements
 const understoodFormSubmitButton = document.getElementById('noteb').childNodes[1];
 understoodFormSubmitButton.submit();
 
@@ -8,6 +8,8 @@ const messageFormSubmitButton = messageForm.childNodes[6];
 
 const cleverbotResponseDiv = document.getElementById('line1');
 const currentResponseInput = cleverbotResponseDiv.childNodes[0];
+
+const newConversation = document.getElementById('actionsnew');
 
 const getCleverbotResponse = onResponse => {
   const answerInterval = setInterval(() => {
@@ -24,6 +26,9 @@ const respondToCleverbot = message => {
   messageFormSubmitButton.click();
 };
 
+const startNewChat = () => newConversation.click();
+
+
 // Socket
 const socket = new WebSocket('ws://localhost:8080');
 
@@ -39,6 +44,11 @@ const handleDataMessage = message => {
   });
 };
 
+const messageHandlers = {
+  'new chat': startNewChat,
+  'data': handleDataMessage
+};
+
 socket.addEventListener('open', event => {
   const message = {
     type: 'connection',
@@ -48,6 +58,7 @@ socket.addEventListener('open', event => {
 });
 
 socket.addEventListener('message', event => {
-  const message = event.data;
-  handleDataMessage(message);
+  const { type, data } = JSON.parse(event.data);
+  const messageHandler = messageHandlers[type];
+  messageHandler(data);
 });
