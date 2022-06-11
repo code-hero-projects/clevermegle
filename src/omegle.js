@@ -1,71 +1,128 @@
-// DOM
+// ==UserScript==
+// @name         CleverMegle Omegle
+// @version      1.0
+// @description  CleverMegle Omegle script
+// @author       Code Hero
+// @match        https://www.omegle.com/*
+// ==/UserScript==
 
-let currentMessagesLength = 0;
+(function () {
+  "use strict";
 
-const consentTermsAndConditions = () => {
-  // TODO
-};
+  window.addEventListener("load", () => {
+    // Socket
 
-const getNextMessage = onMessage => {
-  const answerInterval = setInterval(() => {
-    const strangerMessages = document.getElementsByClassName('strangermsg');
-    const strangerMessagesLength = strangerMessages.length;
+    const socket = new WebSocket("ws://localhost:8080");
 
-    if (strangerMessagesLength > currentMessagesLength) {
-      clearInterval(answerInterval);
+    socket.addEventListener("open", (event) => {
+      const message = {
+        type: "connection",
+        from: "omegle",
+      };
+      socket.send(JSON.stringify(message));
+    });
 
-      currentMessagesLength = strangerMessagesLength;
-      const strangerMessage = strangerMessages[strangerMessagesLength - 1].textContent;
-      const message = strangerMessage.substring(strangerMessage.indexOf(':') + 2);
+    const sendSocketMessage = (messageType, messageData) => {
+      const messageToSend = {
+        type: "data",
+        to: "cleverbot",
+        body: {
+          type: messageType,
+          data: messageData,
+        },
+      };
 
-      onMessage(message);
-    }
-  }, 200);
-};
+      socket.send(JSON.stringify(messageToSend));
+    };
 
-const replyToStranger = message => {
-  const textArea = document.getElementsByClassName('chatmsg ')[0];
-  const sendButton = document.getElementsByClassName('sendbtn')[0];
-  textArea.value = message;
-  sendButton.click();
-};
+    // DOM
 
-// Socket
+    let currentMessagesLength = 0;
 
-const socket = new WebSocket('ws://localhost:8080');
+    const consentTermsAndConditions = () => {
+      const checkboxes = document.querySelectorAll("input[type=checkbox]");
+      const confirmButton = document.querySelectorAll("input[type=button]");
 
-socket.addEventListener('open', event => {
-  const message = {
-    type: 'connection',
-    from: 'omegle'
-  };
-  socket.send(JSON.stringify(message));
-});
+      checkboxes[1].click();
+      checkboxes[2].click();
+      confirmButton[0].click();
+    };
 
-const sendSocketMessage = message => {
-  const messageToSend = {
-    type: 'data',
-    to: 'cleverbot',
-    data: message
-  };
+    const getNextMessage = (onMessage) => {
+      const answerInterval = setInterval(() => {
+        const strangerMessages = document.getElementsByClassName("strangermsg");
+        const strangerMessagesLength = strangerMessages.length;
 
-  socket.send(JSON.stringify(messageToSend));
-};
+        if (strangerMessagesLength > currentMessagesLength) {
+          clearInterval(answerInterval);
 
-// App
+          currentMessagesLength = strangerMessagesLength;
+          const strangerMessage =
+            strangerMessages[strangerMessagesLength - 1].textContent;
+          const message = strangerMessage.substring(
+            strangerMessage.indexOf(":") + 2
+          );
 
-const startChatting = () => {
-  console.log('started');
-  consentTermsAndConditions();
+          onMessage(message);
+        }
 
-  socket.addEventListener('message', event => {
-    const message = event.data;
-    replyToStranger(message);
-    getNextMessage(sendSocketMessage);
+        const newChatWrapper = document.getElementsByClassName("newchatbtnwrapper");
+        if (newChatWrapper.length > 0) {
+          const newChatButtonssss = newChatWrapper[0].childNodes[0];
+          currentMessagesLength = 0;
+          sendSocketMessage("new chat");
+          newChatButtonssss.click();
+        }
+      }, 200);
+    };
+
+    const replyToStranger = (message) => {
+      let currentIndex = 0;
+      const textArea = document.getElementsByClassName("chatmsg")[0];
+      const sendButton = document.getElementsByClassName("sendbtn")[0];
+
+      const typeInterval = setInterval(() => {
+        let finishIndex = currentIndex + 3;
+        let sendMessage = false;
+        if (message.length < finishIndex) {
+          finishIndex = message.length;
+          sendMessage = true;
+        }
+
+        const messageToType = message.substring(currentIndex, finishIndex);
+        currentIndex = finishIndex;
+        textArea.value = textArea.value + messageToType;
+
+        if (sendMessage) {
+          sendButton.click();
+          clearInterval(typeInterval);
+        }
+      }, 700);
+    };
+
+    // App
+
+    const startChatting = () => {
+      consentTermsAndConditions();
+
+      socket.addEventListener("message", (event) => {
+        const { data } = JSON.parse(event.data);
+        replyToStranger(data);
+        getNextMessage((message) => sendSocketMessage("data", message));
+      });
+
+      getNextMessage((message) => sendSocketMessage("data", message));
+    };
+
+    const startChatButtonsIds = [
+      "chattypetextcell",
+      "chattypevideocell",
+      "videobtnstatus",
+    ];
+    startChatButtonsIds.forEach(
+      (id) => (document.getElementById(id).onclick = startChatting)
+    );
+
+    console.log("lets gooooo");
   });
-
-  getNextMessage(sendSocketMessage);
-};
-
-const startChatButtonsIds = ['chattypetextcell', 'chattypevideocell', 'videobtnstatus'];
-startChatButtonsIds.forEach(id => document.getElementById(id).onclick = startChatting);
+})();
