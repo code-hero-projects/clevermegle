@@ -9,23 +9,23 @@
 (function () {
   "use strict";
 
-  window.addEventListener("load", () => {
+  window.addEventListener('load', () => {
     // Socket
 
-    const socket = new WebSocket("ws://localhost:8080");
+    const socket = new WebSocket('ws://localhost:8080');
 
-    socket.addEventListener("open", (event) => {
+    socket.addEventListener('open', (event) => {
       const message = {
-        type: "connection",
-        from: "omegle",
+        type: 'connection',
+        from: 'omegle',
       };
       socket.send(JSON.stringify(message));
     });
 
     const sendSocketMessage = (messageType, messageData) => {
       const messageToSend = {
-        type: "data",
-        to: "cleverbot",
+        type: 'data',
+        to: 'cleverbot',
         body: {
           type: messageType,
           data: messageData,
@@ -40,8 +40,8 @@
     let currentMessagesLength = 0;
 
     const consentTermsAndConditions = () => {
-      const checkboxes = document.querySelectorAll("input[type=checkbox]");
-      const confirmButton = document.querySelectorAll("input[type=button]");
+      const checkboxes = document.querySelectorAll('input[type=checkbox]');
+      const confirmButton = document.querySelectorAll('input[type=button]');
 
       checkboxes[1].click();
       checkboxes[2].click();
@@ -50,36 +50,34 @@
 
     const getNextMessage = (onMessage) => {
       const answerInterval = setInterval(() => {
-        const strangerMessages = document.getElementsByClassName("strangermsg");
+        const strangerMessages = document.getElementsByClassName('strangermsg');
+        const strangerTyping = document.getElementsByClassName('statuslog');
         const strangerMessagesLength = strangerMessages.length;
 
-        if (strangerMessagesLength > currentMessagesLength) {
+        if (strangerMessagesLength > currentMessagesLength && strangerTyping.length == 2) {
           clearInterval(answerInterval);
 
           currentMessagesLength = strangerMessagesLength;
-          const strangerMessage =
-            strangerMessages[strangerMessagesLength - 1].textContent;
-          const message = strangerMessage.substring(
-            strangerMessage.indexOf(":") + 2
-          );
+          const strangerMessage = strangerMessages[strangerMessagesLength - 1].textContent;
+          const message = strangerMessage.substring(strangerMessage.indexOf(':') + 2);
 
           onMessage(message);
         }
 
-        const newChatWrapper = document.getElementsByClassName("newchatbtnwrapper");
+        const newChatWrapper = document.getElementsByClassName('newchatbtnwrapper');
         if (newChatWrapper.length > 0) {
           const newChatButtonssss = newChatWrapper[0].childNodes[0];
           currentMessagesLength = 0;
-          sendSocketMessage("new chat");
+          sendSocketMessage('new chat');
           newChatButtonssss.click();
         }
-      }, 200);
+      }, 1000);
     };
 
     const replyToStranger = (message) => {
       let currentIndex = 0;
-      const textArea = document.getElementsByClassName("chatmsg")[0];
-      const sendButton = document.getElementsByClassName("sendbtn")[0];
+      const textArea = document.getElementsByClassName('chatmsg')[0];
+      const sendButton = document.getElementsByClassName('sendbtn')[0];
 
       const typeInterval = setInterval(() => {
         let finishIndex = currentIndex + 3;
@@ -97,7 +95,7 @@
           sendButton.click();
           clearInterval(typeInterval);
         }
-      }, 700);
+      }, 200);
     };
 
     // App
@@ -105,24 +103,24 @@
     const startChatting = () => {
       consentTermsAndConditions();
 
-      socket.addEventListener("message", (event) => {
+      socket.addEventListener('message', (event) => {
         const { data } = JSON.parse(event.data);
         replyToStranger(data);
-        getNextMessage((message) => sendSocketMessage("data", message));
+        getNextMessage((message) => sendSocketMessage('data', message));
       });
 
-      getNextMessage((message) => sendSocketMessage("data", message));
+      getNextMessage((message) => sendSocketMessage('data', message));
     };
 
     const startChatButtonsIds = [
-      "chattypetextcell",
-      "chattypevideocell",
-      "videobtnstatus",
+      'chattypetextcell',
+      'chattypevideocell',
+      'videobtnstatus',
     ];
     startChatButtonsIds.forEach(
       (id) => (document.getElementById(id).onclick = startChatting)
     );
 
-    console.log("lets gooooo");
+    console.log('lets gooooo');
   });
 })();
